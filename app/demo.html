@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=0, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+    <title>UnDo/Redo Demo</title>
+    <style>
+        body{
+            font-family: sans-serif;
+        }
+        textarea{
+            width: 300px;
+            height: 150px;
+        }
+        fieldset {
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+<h1>UnDo/Redo Demo</h1>
+<p>History manager</p>
+<fieldset>
+<button id="btn-undo">UNDO</button> <button id="btn-redo">REDO</button> <button id="btn-clear">CLEAR</button>
+</fieldset>
+<p>Message</p>
+<fieldset>
+    <textarea id="message" placeholder="write a text"></textarea>
+</fieldset>
+<p>Log</p>
+<fieldset>
+    <textarea id="log"></textarea>
+</fieldset>
+<script type="module">
+import  {UnReDo} from '../dist/unredo.es.js';
+
+    let message = document.getElementById('message');
+    let btnUndo = document.getElementById('btn-undo');
+    let btnRedo = document.getElementById('btn-redo');
+    let btnClear = document.getElementById('btn-clear');
+    let log = document.getElementById('log');
+
+    function toggle(el, state){
+        if (!state)
+            el.setAttribute('disabled', '');
+        else
+            el.removeAttribute('disabled');
+    }
+
+    function appendLog(msg) {
+        log.value += msg + "\n-----------------------\n";
+        log.scrollTop = log.scrollHeight;
+    }
+
+    const myHistory = new UnReDo({
+        provider: ()=> message.value,
+        maxLength:10,
+    }).onUpdate((event)=>{
+        if(event) {
+            const item = event.current, action = event.action, history = event.history, scope = event.scope;
+            console.log(history);
+            console.log(scope);
+            appendLog(action + ':' + item);
+            toggle(btnRedo, myHistory.canRedo());
+            toggle(btnUndo, myHistory.canUndo());
+        }
+    }).onBeforeSave((event)=>{
+		const item = event.current, action = event.action, history = event.history;
+        appendLog('beforeSave:' + item);
+    }).onMaxLength((event)=>{
+		console.log(event)
+        appendLog('maxLength');
+    });
+
+    appendLog('Save initial state');
+    myHistory.save();
+
+    message.addEventListener('keyup', ()=>{
+        console.log('press');
+        myHistory.save();
+    });
+
+    btnUndo.addEventListener('click', ()=>{
+        myHistory.undo((item)=>{
+            message.value = item
+        });
+    });
+
+    btnRedo.addEventListener('click', ()=>{
+        myHistory.redo((item)=>{
+            message.value = item
+        });
+    });
+
+    btnClear.addEventListener('click', ()=>{
+        myHistory.clear();
+    });
+</script>
+</body>
+</html>

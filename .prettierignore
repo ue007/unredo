@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+.vscode
+.git
+**/*.md
+**/*.svg
+**/*.ejs
+**/*.html
