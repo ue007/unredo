@@ -1,18 +1,12 @@
-import { UnReDo } from '../src/memento/index';
+import { MementoManager } from '../src/memento';
 import './style.css';
 declare global {
 	interface Window {
-		unredo: unknown;
+		memento: unknown;
 	}
 }
 
-// test mock api
-fetch('/api/user')
-	.then((res) => res.json())
-	.catch((error) => console.error('Error:', error))
-	.then((response) => console.log('Success:', response));
-
-const unredo = (window.unredo = new UnReDo());
-unredo.save(1);
-unredo.save(2);
-console.log(unredo._history);
+const memento = (window.memento = new MementoManager());
+memento.save(1);
+memento.save(2);
+console.log(memento._history);

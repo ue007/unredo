@@ -1,4 +1,4 @@
-class UnReDo {
+class MementoManager {
     _maxLength = 100;
     _history = [];
     _position = 0;
@@ -299,7 +299,7 @@ class UnReDo {
      * @returns {Undoo}
      */
     onUpdate(callback) {
-        UnReDo.callbackError(callback);
+        MementoManager.callbackError(callback);
         this._onUpdate = callback;
         return this;
     }
@@ -316,7 +316,7 @@ class UnReDo {
      * @returns {Undoo}
      */
     onMaxLength(callback) {
-        UnReDo.callbackError(callback);
+        MementoManager.callbackError(callback);
         this._onMaxLength = callback;
         return this;
     }
@@ -340,11 +340,11 @@ class UnReDo {
      * })
      */
     onBeforeSave(callback) {
-        UnReDo.callbackError(callback);
+        MementoManager.callbackError(callback);
         this._onBeforeSave = callback;
         return this;
     }
 }
 
-export { UnReDo };
-//# sourceMappingURL=unredo.es.js.map
+export { MementoManager };
+//# sourceMappingURL=memento.es.js.map

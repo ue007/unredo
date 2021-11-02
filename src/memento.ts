@@ -1,9 +1,9 @@
-export interface IUnReDoDescriptor {
+export interface IMementoDoDescriptor {
 	provider: () => number;
 	maxLength?: number;
 }
 
-export class UnReDo {
+export class MementoManager {
 	_maxLength = 100;
 	_history: unknown[] = [];
 	_position = 0;
@@ -15,7 +15,7 @@ export class UnReDo {
 	_onMaxLength: (options?: unknown) => void = () => 0;
 	_provider: (options?: unknown) => unknown = () => 0;
 
-	constructor(options?: IUnReDoDescriptor) {
+	constructor(options?: IMementoDoDescriptor) {
 		if (options) {
 			this._provider = options.provider;
 			this._maxLength = options.maxLength || 100;
@@ -326,7 +326,7 @@ export class UnReDo {
 	 * @returns {Undoo}
 	 */
 	onUpdate(callback: () => void) {
-		UnReDo.callbackError(callback);
+		MementoManager.callbackError(callback);
 		this._onUpdate = callback;
 		return this;
 	}
@@ -345,7 +345,7 @@ export class UnReDo {
 	 * @returns {Undoo}
 	 */
 	onMaxLength(callback: () => void) {
-		UnReDo.callbackError(callback);
+		MementoManager.callbackError(callback);
 		this._onMaxLength = callback;
 		return this;
 	}
@@ -371,7 +371,7 @@ export class UnReDo {
 	 * })
 	 */
 	onBeforeSave(callback: () => void) {
-		UnReDo.callbackError(callback);
+		MementoManager.callbackError(callback);
 		this._onBeforeSave = callback;
 		return this;
 	}

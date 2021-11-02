@@ -32,7 +32,7 @@
     <textarea id="log"></textarea>
 </fieldset>
 <script type="module">
-import  {UnReDo} from './unredo.es.js';
+import  {MementoManager} from './memento.es.js';
 
     let message = document.getElementById('message');
     let btnUndo = document.getElementById('btn-undo');
@@ -52,7 +52,7 @@ import  {UnReDo} from './unredo.es.js';
         log.scrollTop = log.scrollHeight;
     }
 
-    const myHistory = new UnReDo({
+    const memento = new MementoManager({
         provider: ()=> message.value,
         maxLength:10,
     }).onUpdate((event)=>{
@@ -61,8 +61,8 @@ import  {UnReDo} from './unredo.es.js';
             console.log(history);
             console.log(scope);
             appendLog(action + ':' + item);
-            toggle(btnRedo, myHistory.canRedo());
-            toggle(btnUndo, myHistory.canUndo());
+            toggle(btnRedo, memento.canRedo());
+            toggle(btnUndo, memento.canUndo());
         }
     }).onBeforeSave((event)=>{
 		const item = event.current, action = event.action, history = event.history;
@@ -73,27 +73,27 @@ import  {UnReDo} from './unredo.es.js';
     });
 
     appendLog('Save initial state');
-    myHistory.save();
+    memento.save();
 
     message.addEventListener('keyup', ()=>{
         console.log('press');
-        myHistory.save();
+        memento.save();
     });
 
     btnUndo.addEventListener('click', ()=>{
-        myHistory.undo((item)=>{
+        memento.undo((item)=>{
             message.value = item
         });
     });
 
     btnRedo.addEventListener('click', ()=>{
-        myHistory.redo((item)=>{
+        memento.redo((item)=>{
             message.value = item
         });
     });
 
     btnClear.addEventListener('click', ()=>{
-        myHistory.clear();
+        memento.clear();
     });
 </script>
 </body>

@@ -18,9 +18,7 @@ module.exports = {
 
 	devtool: 'source-map',
 	devServer: {
-		onBeforeSetupMiddleware: function (devServer) {
-			apiMocker(devServer.app, resolve('./mock/mocker.js'));
-		}
+		onBeforeSetupMiddleware: function (devServer) {}
 	},
 
 	module: {

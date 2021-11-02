@@ -7,12 +7,14 @@
             
 function handle_undo() {
 	console.log('handle_undo');
-    console.log(window.unredo);
+    console.log(window.memento);
+    window.memento.undo();
 }
 
 function handle_redo() {
 	console.log('handle_redo');
-    console.log(window.unredo);
+    console.log(window.memento);
+    window.memento.redo();
 }
         </script>
     </head>
