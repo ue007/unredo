@@ -1,8 +1,18 @@
-export interface IMementoDoDescriptor {
-	provider: () => number;
+export interface IMementoDescriptor {
+	provider?: (options?: unknown) => unknown;
 	maxLength?: number;
 }
+export interface IEventDescriptor {
+	current: unknown;
+	action: string;
+	history: unknown;
+	scope: MementoManager;
+}
 
+/**
+ * Implementing undo/redo Function with Memento Pattern , where you capture the whole current state.
+ * It's easy to implement, but memory-inefficient since you need to store similar copies of the whole state.
+ */
 export class MementoManager {
 	_maxLength = 100;
 	_history: unknown[] = [];
@@ -10,16 +20,18 @@ export class MementoManager {
 	_initialState: unknown = undefined;
 	_isExceeded = false;
 	_suspendSave = false;
-	_onUpdate: (options?: unknown) => unknown = () => 0;
-	_onBeforeSave: (options?: unknown) => unknown = () => 0;
-	_onMaxLength: (options?: unknown) => void = () => 0;
-	_provider: (options?: unknown) => unknown = () => 0;
+	_batchStart = 0;
+	_batchEnd = 0;
+	_onUpdate: (event?: IEventDescriptor) => unknown = () => 0;
+	_onBeforeSave: (event?: IEventDescriptor) => unknown = () => 0;
+	_onMaxLength: (event?: IEventDescriptor) => void = () => 0;
+	_provider: (event?: unknown) => unknown = () => 0;
 
-	constructor(options?: IMementoDoDescriptor) {
-		if (options) {
+	constructor(options?: IMementoDescriptor) {
+		if (options && options.provider) {
 			this._provider = options.provider;
-			this._maxLength = options.maxLength || 100;
 		}
+		this._maxLength = options?.maxLength || 100;
 		this._initiliaze();
 	}
 
@@ -32,6 +44,8 @@ export class MementoManager {
 		this._history = [];
 		this._isExceeded = false;
 		this._position = 0;
+		this._batchStart = 0;
+		this._batchEnd = 0;
 	}
 
 	/**
@@ -43,6 +57,7 @@ export class MementoManager {
 			this._history = this._history.slice(1, this._history.length);
 			if (!this._isExceeded) {
 				this._onMaxLength({
+					action: 'max',
 					current: this.current(),
 					history: this.history(),
 					scope: this
@@ -74,6 +89,31 @@ export class MementoManager {
 	 */
 	_isEqual(a: unknown, b: unknown) {
 		if (a === b) return true;
+
+		/**
+		 * compare two map is equal
+		 * @param map1
+		 * @param map2
+		 * @returns
+		 */
+		const compareMaps = (
+			map1: Map<string, Record<string, unknown>>,
+			map2: Map<string, Record<string, unknown>>
+		) => {
+			let value;
+			if (map1.size !== map2.size) {
+				return false;
+			}
+			for (const [key, val] of map1) {
+				value = map2.get(key);
+				// in cases of an undefined value, make sure the key
+				// actually exists on the object so there are no false positives
+				if (value !== val || (value === undefined && !map2.has(key))) {
+					return false;
+				}
+			}
+			return true;
+		};
 		const arrA = Array.isArray(a),
 			arrB = Array.isArray(b);
 		let i, length, key;
@@ -97,7 +137,9 @@ export class MementoManager {
 		if (regexpA != regexpB) return false;
 		if (regexpA && regexpB) return a.toString() == b.toString();
 
-		if (a instanceof Object && b instanceof Object) {
+		if (a instanceof Map && b instanceof Map) {
+			return compareMaps(a, b);
+		} else if (a instanceof Object && b instanceof Object) {
 			const keys = Object.keys(a);
 			length = keys.length;
 
@@ -143,7 +185,7 @@ export class MementoManager {
 	/**
 	 * Import external history
 	 * @param history {Array}
-	 * @returns {Undoo}
+	 * @returns {MementoManager}
 	 */
 	import(history = []) {
 		if (!Array.isArray(history)) throw new TypeError('Items must be an array');
@@ -155,42 +197,38 @@ export class MementoManager {
 	}
 
 	/**
-	 * Get history
-	 * @returns {Array}
+	 *  get history
+	 * @returns
 	 */
 	history() {
 		return this._history;
 	}
 
 	/**
-	 * Save history
-	 * @param [item] {*}
-	 * @returns {Undoo}
+	 *
+	 * @param value
+	 * @returns
 	 */
 	save(value: unknown) {
 		let item = value;
 		if (typeof item === 'undefined' && typeof this._provider === 'function') {
 			item = this._provider();
 		}
-
 		const beforeSave = this._onBeforeSave({
-			item: item,
+			action: 'beforesave',
+			history: null,
+			current: item,
 			scope: this
 		});
-
 		item = beforeSave || item;
-
 		if (this._rejectSave(item, beforeSave)) return this;
-
 		if (this._position < this._history.length) this._history = this._history.slice(0, this._position);
-
 		if (typeof item !== 'undefined') {
 			this._history.push(item);
 			if (this._initialState === undefined) {
 				this._initialState = item;
 			}
 		}
-
 		this._checkMaxLength();
 		this._position = this._history.length;
 		this._onUpdate({
@@ -203,9 +241,9 @@ export class MementoManager {
 	}
 
 	/**
-	 * Suspend save method
-	 * @param [state=true] {boolean}
-	 * @returns {Undoo}
+	 *
+	 * @param state
+	 * @returns
 	 */
 	suspendSave(state = true) {
 		this._suspendSave = state;
@@ -213,16 +251,16 @@ export class MementoManager {
 	}
 
 	/**
-	 * Check if save is allowed
-	 * @returns {boolean}
+	 *
+	 * @returns
 	 */
 	allowedSave() {
 		return !this._suspendSave;
 	}
 
 	/**
-	 * Clear history
-	 * @returns {Undoo}
+	 *
+	 * @returns
 	 */
 	clear() {
 		this._initiliaze();
@@ -236,15 +274,9 @@ export class MementoManager {
 	}
 
 	/**
-	 * undo callback
-	 * @callback Undoo~undoCallback
-	 * @param item {*} current history item
-	 */
-
-	/**
-	 * Undo
-	 * @param [callback] {Undoo~undoCallback} callback function
-	 * @returns {Undoo}
+	 *
+	 * @param callback
+	 * @returns
 	 */
 	undo(callback: (current: unknown) => void) {
 		if (this.canUndo()) {
@@ -263,15 +295,9 @@ export class MementoManager {
 	}
 
 	/**
-	 * redo callback
-	 * @callback Undoo~redoCallback
-	 * @param item {*} current history item
-	 */
-
-	/**
-	 * Redo
-	 * @param [callback] {Undoo~redoCallback} callback function
-	 * @returns {Undoo}
+	 *
+	 * @param callback
+	 * @returns
 	 */
 	redo(callback: (current: unknown) => void) {
 		if (this.canRedo()) {
@@ -288,91 +314,75 @@ export class MementoManager {
 	}
 
 	/**
-	 * Get current item in history
-	 * @returns {*}
+	 *
+	 * @returns
 	 */
 	current() {
 		return this._history.length ? this._history[this._position - 1] : null;
 	}
 
 	/**
-	 * Count history items, the first element is not considered
-	 * @returns {number}
+	 *
+	 * @returns
 	 */
 	count() {
 		return this._history.length ? this._history.length - 1 : 0;
 	}
 
 	/**
-	 * Get initial state history
-	 * @returns {*}
+	 *
+	 * @returns
 	 */
 	initialState() {
 		return this._initialState;
 	}
 
 	/**
-	 * onUpdate callback
-	 * @callback Undoo~updateCallback
-	 * @param item {*} current history item
-	 * @param action {string} action that has called update event. Can be: redo, undo, save, clear
-	 * @param history {Array} history array
-	 * @param istance {Undoo}
+	 *
+	 * @param callback
+	 * @returns
 	 */
-
-	/**
-	 * Triggered when history is updated
-	 * @param callback {Undoo~updateCallback} callback function
-	 * @returns {Undoo}
-	 */
-	onUpdate(callback: () => void) {
+	onUpdate(callback: (event?: IEventDescriptor) => unknown) {
 		MementoManager.callbackError(callback);
 		this._onUpdate = callback;
 		return this;
 	}
 
 	/**
-	 * onMaxLength callback
-	 * @callback Undoo~maxLengthCallback
-	 * @param item {*} current history item
-	 * @param history {Array} history array
-	 * @param istance {Undoo}
+	 *
+	 * @param callback
+	 * @returns
 	 */
-
-	/**
-	 * Triggered when maxLength is exceeded
-	 * @param callback {Undoo~maxLengthCallback} callback function
-	 * @returns {Undoo}
-	 */
-	onMaxLength(callback: () => void) {
+	onMaxLength(callback: (event?: IEventDescriptor) => void) {
 		MementoManager.callbackError(callback);
 		this._onMaxLength = callback;
 		return this;
 	}
 
 	/**
-	 * onBeforeSave callback
-	 * @callback Undoo~beforeSaveCallback
-	 * @param item {*} current history item
-	 * @param istance {Undoo}
-	 */
-
-	/**
-	 * Triggered before save
-	 * @param callback {Undoo~beforeSaveCallback} callback function
-	 * @returns {Undoo}
-	 * @example
-	 * // If callback returns `false` the save command will not be executed
-	 * myHistory.onBeforeSave(()=>false)
 	 *
-	 * // You can overwrite item before save
-	 * myHistory.onBeforeSave((item)=>{
-	 *      return item.toUpperCase();
-	 * })
+	 * @param callback
+	 * @returns
 	 */
-	onBeforeSave(callback: () => void) {
+	onBeforeSave(callback: (event?: IEventDescriptor) => void) {
 		MementoManager.callbackError(callback);
 		this._onBeforeSave = callback;
 		return this;
+	}
+
+	/**
+	 * start batch mode
+	 */
+	batchStart() {
+		this._batchStart = this._position;
+	}
+
+	/**
+	 * end batch mode
+	 */
+	batchEnd() {
+		this._batchEnd = this._position - 1;
+		this._history && this._history.splice(this._batchStart, this._batchEnd - this._batchStart);
+		this._position = this._batchStart;
 	}
 }
