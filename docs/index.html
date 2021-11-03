@@ -40,9 +40,8 @@
 		<fieldset>
 			<textarea id="log"></textarea>
 		</fieldset>
-		<script type="module">
-			import { MementoManager } from '../dist/memento.es.js';
-
+		<script src="./libs/unredo.js"></script>
+		<script>
 			let message = document.getElementById('message');
 			let btnUndo = document.getElementById('btn-undo');
 			let btnRedo = document.getElementById('btn-redo');
@@ -59,7 +58,7 @@
 				log.scrollTop = log.scrollHeight;
 			}
 
-			const memento = new MementoManager({
+			const memento = new unredo.MementoManager({
 				provider: () => message.value,
 				maxLength: 10
 			})

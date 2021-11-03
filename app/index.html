@@ -1,26 +1,25 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8" />
-        <title>App</title>
-        <script>
-            
-function handle_undo() {
-	console.log('handle_undo');
-    console.log(window.memento);
-    window.memento.undo();
-}
+	<head>
+		<meta charset="utf-8" />
+		<title>App</title>
+		<script>
+			function handle_undo() {
+				console.log('handle_undo');
+				console.log(window.memento);
+				window.memento.undo();
+			}
 
-function handle_redo() {
-	console.log('handle_redo');
-    console.log(window.memento);
-    window.memento.redo();
-}
-        </script>
-    </head>
+			function handle_redo() {
+				console.log('handle_redo');
+				console.log(window.memento);
+				window.memento.redo();
+			}
+		</script>
+	</head>
 
-    <body>
-        <button onclick="handle_undo()">Undo</button>
-        <button onclick="handle_redo()">Redo</button>
-    </body>
+	<body>
+		<button onclick="handle_undo()">Undo</button>
+		<button onclick="handle_redo()">Redo</button>
+	</body>
 </html>
