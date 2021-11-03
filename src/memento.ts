@@ -1,3 +1,4 @@
+import cloneDeep from 'lodash/cloneDeep';
 export interface IMementoDescriptor {
 	provider?: (options?: unknown) => unknown;
 	maxLength?: number;
@@ -10,6 +11,8 @@ export interface IEventDescriptor {
 }
 
 /**
+ * @class
+ * @description
  * Implementing undo/redo Function with Memento Pattern , where you capture the whole current state.
  * It's easy to implement, but memory-inefficient since you need to store similar copies of the whole state.
  */
@@ -27,6 +30,12 @@ export class MementoManager {
 	_onMaxLength: (event?: IEventDescriptor) => void = () => 0;
 	_provider: (event?: unknown) => unknown = () => 0;
 
+	/**
+	 *
+	 * @param options {IMementoDescriptor}
+	 * @param options.provider {Function}
+	 * @param options.maxLength {Function}
+	 */
 	constructor(options?: IMementoDescriptor) {
 		if (options && options.provider) {
 			this._provider = options.provider;
@@ -39,7 +48,7 @@ export class MementoManager {
 	 * @ignore
 	 * @private
 	 */
-	_initiliaze() {
+	_initiliaze(): void {
 		this._initialState = undefined;
 		this._history = [];
 		this._isExceeded = false;
@@ -51,8 +60,9 @@ export class MementoManager {
 	/**
 	 * @ignore
 	 * @private
+	 * @returns {void}
 	 */
-	_checkMaxLength() {
+	_checkMaxLength(): void {
 		if (this._history.length > this._maxLength) {
 			this._history = this._history.slice(1, this._history.length);
 			if (!this._isExceeded) {
@@ -67,6 +77,7 @@ export class MementoManager {
 		} else {
 			this._isExceeded = false;
 		}
+		return;
 	}
 
 	/**
@@ -77,7 +88,7 @@ export class MementoManager {
 	 * @private
 	 * @ignore
 	 */
-	_rejectSave(item: unknown, beforeSave: unknown) {
+	_rejectSave(item: unknown, beforeSave: unknown): boolean {
 		return this._isEqual(item, this.current()) || beforeSave === false || this._suspendSave;
 	}
 
@@ -85,21 +96,24 @@ export class MementoManager {
 	 * check a === b
 	 * @param a
 	 * @param b
-	 * @returns
+	 * @returns {boolean}
+	 * @ignore
 	 */
-	_isEqual(a: unknown, b: unknown) {
+	_isEqual(a: unknown, b: unknown): boolean {
 		if (a === b) return true;
 
 		/**
 		 * compare two map is equal
 		 * @param map1
 		 * @param map2
-		 * @returns
+		 * @returns {boolean}
+		 * @private
+		 * @ignore
 		 */
 		const compareMaps = (
 			map1: Map<string, Record<string, unknown>>,
 			map2: Map<string, Record<string, unknown>>
-		) => {
+		): boolean => {
 			let value;
 			if (map1.size !== map2.size) {
 				return false;
@@ -161,7 +175,7 @@ export class MementoManager {
 	 * Check if undo is available
 	 * @returns {boolean}
 	 */
-	canUndo() {
+	canUndo(): boolean {
 		return this._position > 1;
 	}
 
@@ -169,7 +183,7 @@ export class MementoManager {
 	 * @Check if redo is available
 	 * @returns {boolean}
 	 */
-	canRedo() {
+	canRedo(): boolean {
 		return this._position < this._history.length;
 	}
 
@@ -187,7 +201,7 @@ export class MementoManager {
 	 * @param history {Array}
 	 * @returns {MementoManager}
 	 */
-	import(history = []) {
+	import(history = []): MementoManager {
 		if (!Array.isArray(history)) throw new TypeError('Items must be an array');
 		this._initiliaze();
 		this._history = history;
@@ -198,25 +212,25 @@ export class MementoManager {
 
 	/**
 	 *  get history
-	 * @returns
+	 * @returns {unknown[]}
 	 */
-	history() {
+	history(): unknown[] {
 		return this._history;
 	}
 
 	/**
 	 *
 	 * @param value
-	 * @returns
+	 * @returns {MementoManager}
 	 */
-	save(value: unknown) {
+	save(value: unknown): MementoManager {
 		let item = value;
 		if (typeof item === 'undefined' && typeof this._provider === 'function') {
 			item = this._provider();
 		}
 		const beforeSave = this._onBeforeSave({
 			action: 'beforesave',
-			history: null,
+			history: this._history,
 			current: item,
 			scope: this
 		});
@@ -224,7 +238,12 @@ export class MementoManager {
 		if (this._rejectSave(item, beforeSave)) return this;
 		if (this._position < this._history.length) this._history = this._history.slice(0, this._position);
 		if (typeof item !== 'undefined') {
-			this._history.push(item);
+			if (item instanceof Map) {
+				this._history.push(cloneDeep(item));
+			} else {
+				this._history.push(JSON.parse(JSON.stringify(item)));
+			}
+
 			if (this._initialState === undefined) {
 				this._initialState = item;
 			}
@@ -243,26 +262,26 @@ export class MementoManager {
 	/**
 	 *
 	 * @param state
-	 * @returns
+	 * @returns {MementoManager}
 	 */
-	suspendSave(state = true) {
+	suspendSave(state = true): MementoManager {
 		this._suspendSave = state;
 		return this;
 	}
 
 	/**
 	 *
-	 * @returns
+	 * @returns {boolean}
 	 */
-	allowedSave() {
+	allowedSave(): boolean {
 		return !this._suspendSave;
 	}
 
 	/**
 	 *
-	 * @returns
+	 * @returns {MementoManager}
 	 */
-	clear() {
+	clear(): MementoManager {
 		this._initiliaze();
 		this._onUpdate({
 			current: null,
@@ -276,9 +295,9 @@ export class MementoManager {
 	/**
 	 *
 	 * @param callback
-	 * @returns
+	 * @returns {MementoManager}
 	 */
-	undo(callback: (current: unknown) => void) {
+	undo(callback: (current: unknown) => void): MementoManager {
 		if (this.canUndo()) {
 			this._position--;
 			if (typeof callback === 'function') {
@@ -297,9 +316,9 @@ export class MementoManager {
 	/**
 	 *
 	 * @param callback
-	 * @returns
+	 * @returns {MementoManager}
 	 */
-	redo(callback: (current: unknown) => void) {
+	redo(callback: (current: unknown) => void): MementoManager {
 		if (this.canRedo()) {
 			this._position++;
 			if (typeof callback === 'function') callback(this.current());
@@ -314,35 +333,42 @@ export class MementoManager {
 	}
 
 	/**
-	 *
-	 * @returns
+	 * get current position
+	 * @returns {number}
 	 */
-	current() {
+	get position(): number {
+		return this._position;
+	}
+	/**
+	 *
+	 * @returns {*}
+	 */
+	current(): unknown {
 		return this._history.length ? this._history[this._position - 1] : null;
 	}
 
 	/**
 	 *
-	 * @returns
+	 * @returns {number}
 	 */
-	count() {
+	count(): number {
 		return this._history.length ? this._history.length - 1 : 0;
 	}
 
 	/**
 	 *
-	 * @returns
+	 * @returns {unknown}
 	 */
-	initialState() {
+	initialState(): unknown {
 		return this._initialState;
 	}
 
 	/**
 	 *
 	 * @param callback
-	 * @returns
+	 * @returns {MementoManager}
 	 */
-	onUpdate(callback: (event?: IEventDescriptor) => unknown) {
+	onUpdate(callback: (event?: IEventDescriptor) => unknown): MementoManager {
 		MementoManager.callbackError(callback);
 		this._onUpdate = callback;
 		return this;
@@ -351,9 +377,9 @@ export class MementoManager {
 	/**
 	 *
 	 * @param callback
-	 * @returns
+	 * @returns {MementoManager}
 	 */
-	onMaxLength(callback: (event?: IEventDescriptor) => void) {
+	onMaxLength(callback: (event?: IEventDescriptor) => void): MementoManager {
 		MementoManager.callbackError(callback);
 		this._onMaxLength = callback;
 		return this;
@@ -362,9 +388,9 @@ export class MementoManager {
 	/**
 	 *
 	 * @param callback
-	 * @returns
+	 * @returns {MementoManager}
 	 */
-	onBeforeSave(callback: (event?: IEventDescriptor) => void) {
+	onBeforeSave(callback: (event?: IEventDescriptor) => void): MementoManager {
 		MementoManager.callbackError(callback);
 		this._onBeforeSave = callback;
 		return this;
@@ -372,15 +398,17 @@ export class MementoManager {
 
 	/**
 	 * start batch mode
+	 *  @returns {void}
 	 */
-	batchStart() {
+	batchStart(): void {
 		this._batchStart = this._position;
 	}
 
 	/**
 	 * end batch mode
+	 * @returns {void}
 	 */
-	batchEnd() {
+	batchEnd(): void {
 		this._batchEnd = this._position - 1;
 		this._history && this._history.splice(this._batchStart, this._batchEnd - this._batchStart);
 		this._position = this._batchStart;

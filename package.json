@@ -11,7 +11,7 @@
 		"build:dev": "rollup -c tools/rollup.config.dev.js",
 		"build:prod": "rollup -c tools/rollup.config.prod.js",
 		"start": "cross-env NODE_ENV=development webpack serve --open --config ./webpack.config.js",
-		"doc": "jsdoc2md --template README.hbs --no-gfm --files src/memento/index.ts > README.md"
+		"doc": "jsdoc2md --template README.hbs --no-gfm --files dist/memento.es.js > README.md"
 	},
 	"repository": {
 		"type": "git",
@@ -34,6 +34,7 @@
 		"@babel/preset-typescript": "^7.15.0",
 		"@rollup/plugin-typescript": "^8.3.0",
 		"@types/jest": "^27.0.2",
+		"@types/lodash": "^4.14.176",
 		"@typescript-eslint/eslint-plugin": "^5.1.0",
 		"@typescript-eslint/parser": "^5.1.0",
 		"cross-env": "^7.0.3",
@@ -43,6 +44,7 @@
 		"eslint-plugin-prettier": "^4.0.0",
 		"html-webpack-plugin": "^5.4.0",
 		"jest": "^27.3.1",
+		"jsdoc-to-markdown": "^4.0.1",
 		"mocker-api": "^2.9.3",
 		"prettier": "^2.4.1",
 		"progress-bar-webpack-plugin": "^2.1.0",
@@ -57,8 +59,7 @@
 		"typescript-json-serializer": "^3.4.4",
 		"webpack": "^5.58.2",
 		"webpack-cli": "^4.9.1",
-		"webpack-dev-server": "^4.3.1",
-		"jsdoc-to-markdown": "^4.0.1"
+		"webpack-dev-server": "^4.3.1"
 	},
 	"dependencies": {}
 }

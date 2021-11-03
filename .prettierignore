@@ -6,4 +6,4 @@ build
 **/*.md
 **/*.svg
 **/*.ejs
-**/*.html
+# **/*.html

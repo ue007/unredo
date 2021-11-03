@@ -1,0 +1,78 @@
+# Undo
+Undo/Redo Manager
+
+<a href="" target="_blank"><img src="https://travis-ci.org/fabioricali/undoo.svg?branch=master" title="Build Status"/></a>
+<a href="https://opensource.org/licenses/MIT" target="_blank"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" title="License: MIT"/></a>
+
+## Installation
+
+### Node.js
+```
+npm install unredo --save
+```
+
+## Example
+```javascript
+import { MementoManager } from '../dist/memento.es.js';
+
+const memento = new MementoManager().onUpdate((event) => {
+    console.log(event);
+}).onBeforeSave((event) => {
+    console.log(event);
+});
+
+function mapToString(map: Map<any, any>): string {
+    return JSON.stringify(
+        Array.from(map.entries()).reduce((o: any, [key, value]) => {
+        o[key] = value;
+        return o;
+    }, {}));
+}
+
+const datas = new Map();
+datas.set(0, 0);
+memento.save(mapToString(datas));
+
+datas.set(1, 1);
+memento.save(mapToString(datas));
+
+datas.set(2, 2);
+memento.save(mapToString(datas));
+
+datas.set(3, 3);
+memento.save(mapToString(datas));
+
+console.log(memento);
+
+memento.batchStart();
+
+datas.set(4, 4);
+memento.save(mapToString(datas));
+
+datas.set(5, 5);
+memento.save(mapToString(datas));
+
+datas.set(6, 6);
+memento.save(mapToString(datas));
+
+memento.batchEnd();
+
+console.log(memento);
+```
+
+## Demo
+
+<a href="https://ue007.github.io/unredo/">Try now</a>
+
+## API
+
+{{>main}}
+
+## Changelog
+You can view the changelog <a target="_blank" href="https://github.com/fabioricali/undoo/blob/master/CHANGELOG.md">here</a>
+
+## License
+UnReDo is open-sourced software licensed under the <a target="_blank" href="http://opensource.org/licenses/MIT">MIT license</a>
+
+## Author
+<a target="_blank" href="">Jeff</a>

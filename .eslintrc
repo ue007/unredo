@@ -51,6 +51,6 @@
 		],
 		"@typescript-eslint/no-empty-function": [
 			1
-		]
+		],
 	}
 }

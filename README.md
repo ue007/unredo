@@ -1,155 +1,142 @@
-# Undoo
-Undo/redo manager
+# Undo
+Undo/Redo Manager
 
-<a href="https://travis-ci.org/fabioricali/undoo" target="_blank"><img src="https://travis-ci.org/fabioricali/undoo.svg?branch=master" title="Build Status"/></a>
+<a href="" target="_blank"><img src="https://travis-ci.org/fabioricali/undoo.svg?branch=master" title="Build Status"/></a>
 <a href="https://opensource.org/licenses/MIT" target="_blank"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" title="License: MIT"/></a>
 
 ## Installation
 
 ### Node.js
 ```
-npm install undoo --save
-```
-
-### Browser
-
-#### Local
-```html
-<script src="node_modules/undoo/dist/undoo.min.js"></script>
-```
-
-#### CDN unpkg
-```html
-<script src="https://unpkg.com/undoo/dist/undoo.min.js"></script>
+npm install unredo --save
 ```
 
 ## Example
-
 ```javascript
-const Undoo = require('undoo');
+import { MementoManager } from '../dist/memento.es.js';
 
-const myHistory = new Undoo();
-
-myHistory
-    .save('one')
-    .save('two')
-    .save('three')
-    .save('four');
-
-myHistory.undo((item)=>{
-    console.log(item); //=> three
+const memento = new MementoManager().onUpdate((event) => {
+    console.log(event);
+}).onBeforeSave((event) => {
+    console.log(event);
 });
 
-myHistory.current(); //=> three
+function mapToString(map: Map<any, any>): string {
+    return JSON.stringify(
+        Array.from(map.entries()).reduce((o: any, [key, value]) => {
+        o[key] = value;
+        return o;
+    }, {}));
+}
 
-myHistory.redo((item)=>{
-    console.log(item); //=> four
-});
+const datas = new Map();
+datas.set(0, 0);
+memento.save(mapToString(datas));
 
-```
+datas.set(1, 1);
+memento.save(mapToString(datas));
 
-## Use provider
+datas.set(2, 2);
+memento.save(mapToString(datas));
 
-```javascript
-const Undoo = require('undoo');
+datas.set(3, 3);
+memento.save(mapToString(datas));
 
-const myHistory = new Undoo({
-    provider: () => document.getElementById('myTextArea').value
-});
+console.log(memento);
 
-myHistory.save();
+memento.batchStart();
 
+datas.set(4, 4);
+memento.save(mapToString(datas));
+
+datas.set(5, 5);
+memento.save(mapToString(datas));
+
+datas.set(6, 6);
+memento.save(mapToString(datas));
+
+memento.batchEnd();
+
+console.log(memento);
 ```
 
 ## Demo
 
-<a href="https://fabioricali.github.io/undoo/sample/">Try now</a>
+<a href="https://ue007.github.io/unredo/">Try now</a>
 
 ## API
 
-<a name="Undoo"></a>
+<a name="MementoManager"></a>
 
-## Undoo
+## MementoManager
 **Kind**: global class  
 
-- [Undoo](#undoo)
-  - [Installation](#installation)
-    - [Node.js](#nodejs)
-    - [Browser](#browser)
-      - [Local](#local)
-      - [CDN unpkg](#cdn-unpkg)
-  - [Example](#example)
-  - [Use provider](#use-provider)
-  - [Demo](#demo)
-  - [API](#api)
-  - [Undoo](#undoo-1)
-    - [new Undoo([opts])](#new-undooopts)
-    - [undoo.canUndo() ⇒ <code>boolean</code>](#undoocanundo--boolean)
-    - [undoo.canRedo() ⇒ <code>boolean</code>](#undoocanredo--boolean)
-    - [undoo.import(history) ⇒ <code>Undoo</code>](#undooimporthistory--undoo)
-    - [undoo.history() ⇒ <code>Array</code>](#undoohistory--array)
-    - [undoo.save([item]) ⇒ <code>Undoo</code>](#undoosaveitem--undoo)
-    - [undoo.suspendSave([state]) ⇒ <code>Undoo</code>](#undoosuspendsavestate--undoo)
-    - [undoo.allowedSave() ⇒ <code>boolean</code>](#undooallowedsave--boolean)
-    - [undoo.clear() ⇒ <code>Undoo</code>](#undooclear--undoo)
-    - [undoo.undo([callback]) ⇒ <code>Undoo</code>](#undooundocallback--undoo)
-    - [undoo.redo([callback]) ⇒ <code>Undoo</code>](#undooredocallback--undoo)
-    - [undoo.current() ⇒ <code>\*</code>](#undoocurrent--)
-    - [undoo.count() ⇒ <code>number</code>](#undoocount--number)
-    - [undoo.initialState() ⇒ <code>\*</code>](#undooinitialstate--)
-    - [undoo.onUpdate(callback) ⇒ <code>Undoo</code>](#undooonupdatecallback--undoo)
-    - [undoo.onMaxLength(callback) ⇒ <code>Undoo</code>](#undooonmaxlengthcallback--undoo)
-    - [undoo.onBeforeSave(callback) ⇒ <code>Undoo</code>](#undooonbeforesavecallback--undoo)
-    - [Undoo~undoCallback : <code>function</code>](#undooundocallback--function)
-    - [Undoo~redoCallback : <code>function</code>](#undooredocallback--function)
-    - [Undoo~updateCallback : <code>function</code>](#undooupdatecallback--function)
-    - [Undoo~maxLengthCallback : <code>function</code>](#undoomaxlengthcallback--function)
-    - [Undoo~beforeSaveCallback : <code>function</code>](#undoobeforesavecallback--function)
-  - [Changelog](#changelog)
-  - [License](#license)
-  - [Author](#author)
+* [MementoManager](#MementoManager)
+    * [new MementoManager(options)](#new_MementoManager_new)
+    * [.position](#MementoManager+position) ⇒ <code>number</code>
+    * [.canUndo()](#MementoManager+canUndo) ⇒ <code>boolean</code>
+    * [.canRedo()](#MementoManager+canRedo) ⇒ <code>boolean</code>
+    * [.import(history)](#MementoManager+import) ⇒ [<code>MementoManager</code>](#MementoManager)
+    * [.history()](#MementoManager+history) ⇒ <code>[ &#x27;Array&#x27; ].&lt;unknown&gt;</code>
+    * [.save(value)](#MementoManager+save) ⇒ [<code>MementoManager</code>](#MementoManager)
+    * [.suspendSave(state)](#MementoManager+suspendSave) ⇒ [<code>MementoManager</code>](#MementoManager)
+    * [.allowedSave()](#MementoManager+allowedSave) ⇒ <code>boolean</code>
+    * [.clear()](#MementoManager+clear) ⇒ [<code>MementoManager</code>](#MementoManager)
+    * [.undo(callback)](#MementoManager+undo) ⇒ [<code>MementoManager</code>](#MementoManager)
+    * [.redo(callback)](#MementoManager+redo) ⇒ [<code>MementoManager</code>](#MementoManager)
+    * [.current()](#MementoManager+current) ⇒ <code>\*</code>
+    * [.count()](#MementoManager+count) ⇒ <code>number</code>
+    * [.initialState()](#MementoManager+initialState) ⇒ <code>unknown</code>
+    * [.onUpdate(callback)](#MementoManager+onUpdate) ⇒ [<code>MementoManager</code>](#MementoManager)
+    * [.onMaxLength(callback)](#MementoManager+onMaxLength) ⇒ [<code>MementoManager</code>](#MementoManager)
+    * [.onBeforeSave(callback)](#MementoManager+onBeforeSave) ⇒ [<code>MementoManager</code>](#MementoManager)
+    * [.batchStart()](#MementoManager+batchStart) ⇒ <code>void</code>
+    * [.batchEnd()](#MementoManager+batchEnd) ⇒ <code>void</code>
 
-<a name="new_Undoo_new"></a>
+<a name="new_MementoManager_new"></a>
 
-### new Undoo([opts])
-Create instance
+### new MementoManager(options)
+Implementing undo/redo Function with Memento Pattern , where you capture the whole current state.It's easy to implement, but memory-inefficient since you need to store similar copies of the whole state.
 
 <table>
   <thead>
     <tr>
-      <th>Param</th><th>Type</th><th>Default</th><th>Description</th>
+      <th>Param</th><th>Type</th>
     </tr>
   </thead>
   <tbody>
 <tr>
-    <td>[opts]</td><td><code>Object</code></td><td></td><td><p>configuration object</p>
-</td>
+    <td>options</td><td><code>IMementoDescriptor</code></td>
     </tr><tr>
-    <td>[opts.provider]</td><td><code>function</code></td><td><code></code></td><td><p>optional function called on save that returns new state for history</p>
-</td>
+    <td>options.provider</td><td><code>function</code></td>
     </tr><tr>
-    <td>[opts.maxLength]</td><td><code>number</code></td><td><code>20</code></td><td><p>max length history</p>
-</td>
+    <td>options.maxLength</td><td><code>function</code></td>
     </tr>  </tbody>
 </table>
 
-<a name="Undoo+canUndo"></a>
+<a name="MementoManager+position"></a>
 
-### undoo.canUndo() ⇒ <code>boolean</code>
+### mementoManager.position ⇒ <code>number</code>
+get current position
+
+**Kind**: instance property of [<code>MementoManager</code>](#MementoManager)  
+<a name="MementoManager+canUndo"></a>
+
+### mementoManager.canUndo() ⇒ <code>boolean</code>
 Check if undo is available
 
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
-<a name="Undoo+canRedo"></a>
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
+<a name="MementoManager+canRedo"></a>
 
-### undoo.canRedo() ⇒ <code>boolean</code>
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
+### mementoManager.canRedo() ⇒ <code>boolean</code>
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
 **Check**: if redo is available  
-<a name="Undoo+import"></a>
+<a name="MementoManager+import"></a>
 
-### undoo.import(history) ⇒ [<code>Undoo</code>](#Undoo)
+### mementoManager.import(history) ⇒ [<code>MementoManager</code>](#MementoManager)
 Import external history
 
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
 <table>
   <thead>
     <tr>
@@ -162,299 +149,162 @@ Import external history
     </tr>  </tbody>
 </table>
 
-<a name="Undoo+history"></a>
+<a name="MementoManager+history"></a>
 
-### undoo.history() ⇒ <code>Array</code>
-Get history
+### mementoManager.history() ⇒ <code>[ &#x27;Array&#x27; ].&lt;unknown&gt;</code>
+get history
 
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
-<a name="Undoo+save"></a>
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
+<a name="MementoManager+save"></a>
 
-### undoo.save([item]) ⇒ [<code>Undoo</code>](#Undoo)
-Save history
-
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
+### mementoManager.save(value) ⇒ [<code>MementoManager</code>](#MementoManager)
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
 <table>
   <thead>
     <tr>
-      <th>Param</th><th>Type</th>
+      <th>Param</th>
     </tr>
   </thead>
   <tbody>
 <tr>
-    <td>[item]</td><td><code>*</code></td>
+    <td>value</td>
     </tr>  </tbody>
 </table>
 
-<a name="Undoo+suspendSave"></a>
+<a name="MementoManager+suspendSave"></a>
 
-### undoo.suspendSave([state]) ⇒ [<code>Undoo</code>](#Undoo)
-Suspend save method
-
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
+### mementoManager.suspendSave(state) ⇒ [<code>MementoManager</code>](#MementoManager)
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
 <table>
   <thead>
     <tr>
-      <th>Param</th><th>Type</th><th>Default</th>
+      <th>Param</th><th>Default</th>
     </tr>
   </thead>
   <tbody>
 <tr>
-    <td>[state]</td><td><code>boolean</code></td><td><code>true</code></td>
+    <td>state</td><td><code>true</code></td>
     </tr>  </tbody>
 </table>
 
-<a name="Undoo+allowedSave"></a>
+<a name="MementoManager+allowedSave"></a>
 
-### undoo.allowedSave() ⇒ <code>boolean</code>
-Check if save is allowed
+### mementoManager.allowedSave() ⇒ <code>boolean</code>
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
+<a name="MementoManager+clear"></a>
 
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
-<a name="Undoo+clear"></a>
+### mementoManager.clear() ⇒ [<code>MementoManager</code>](#MementoManager)
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
+<a name="MementoManager+undo"></a>
 
-### undoo.clear() ⇒ [<code>Undoo</code>](#Undoo)
-Clear history
-
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
-<a name="Undoo+undo"></a>
-
-### undoo.undo([callback]) ⇒ [<code>Undoo</code>](#Undoo)
-Undo
-
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
+### mementoManager.undo(callback) ⇒ [<code>MementoManager</code>](#MementoManager)
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
 <table>
   <thead>
     <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
+      <th>Param</th>
     </tr>
   </thead>
   <tbody>
 <tr>
-    <td>[callback]</td><td><code><a href="#Undoo..undoCallback">undoCallback</a></code></td><td><p>callback function</p>
-</td>
+    <td>callback</td>
     </tr>  </tbody>
 </table>
 
-<a name="Undoo+redo"></a>
+<a name="MementoManager+redo"></a>
 
-### undoo.redo([callback]) ⇒ [<code>Undoo</code>](#Undoo)
-Redo
-
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
+### mementoManager.redo(callback) ⇒ [<code>MementoManager</code>](#MementoManager)
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
 <table>
   <thead>
     <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
+      <th>Param</th>
     </tr>
   </thead>
   <tbody>
 <tr>
-    <td>[callback]</td><td><code><a href="#Undoo..redoCallback">redoCallback</a></code></td><td><p>callback function</p>
-</td>
+    <td>callback</td>
     </tr>  </tbody>
 </table>
 
-<a name="Undoo+current"></a>
+<a name="MementoManager+current"></a>
 
-### undoo.current() ⇒ <code>\*</code>
-Get current item in history
+### mementoManager.current() ⇒ <code>\*</code>
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
+<a name="MementoManager+count"></a>
 
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
-<a name="Undoo+count"></a>
+### mementoManager.count() ⇒ <code>number</code>
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
+<a name="MementoManager+initialState"></a>
 
-### undoo.count() ⇒ <code>number</code>
-Count history items, the first element is not considered
+### mementoManager.initialState() ⇒ <code>unknown</code>
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
+<a name="MementoManager+onUpdate"></a>
 
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
-<a name="Undoo+initialState"></a>
-
-### undoo.initialState() ⇒ <code>\*</code>
-Get initial state history
-
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
-<a name="Undoo+onUpdate"></a>
-
-### undoo.onUpdate(callback) ⇒ [<code>Undoo</code>](#Undoo)
-Triggered when history is updated
-
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
+### mementoManager.onUpdate(callback) ⇒ [<code>MementoManager</code>](#MementoManager)
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
 <table>
   <thead>
     <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
+      <th>Param</th>
     </tr>
   </thead>
   <tbody>
 <tr>
-    <td>callback</td><td><code><a href="#Undoo..updateCallback">updateCallback</a></code></td><td><p>callback function</p>
-</td>
+    <td>callback</td>
     </tr>  </tbody>
 </table>
 
-<a name="Undoo+onMaxLength"></a>
+<a name="MementoManager+onMaxLength"></a>
 
-### undoo.onMaxLength(callback) ⇒ [<code>Undoo</code>](#Undoo)
-Triggered when maxLength is exceeded
-
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
+### mementoManager.onMaxLength(callback) ⇒ [<code>MementoManager</code>](#MementoManager)
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
 <table>
   <thead>
     <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
+      <th>Param</th>
     </tr>
   </thead>
   <tbody>
 <tr>
-    <td>callback</td><td><code><a href="#Undoo..maxLengthCallback">maxLengthCallback</a></code></td><td><p>callback function</p>
-</td>
+    <td>callback</td>
     </tr>  </tbody>
 </table>
 
-<a name="Undoo+onBeforeSave"></a>
+<a name="MementoManager+onBeforeSave"></a>
 
-### undoo.onBeforeSave(callback) ⇒ [<code>Undoo</code>](#Undoo)
-Triggered before save
-
-**Kind**: instance method of [<code>Undoo</code>](#Undoo)  
+### mementoManager.onBeforeSave(callback) ⇒ [<code>MementoManager</code>](#MementoManager)
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
 <table>
   <thead>
     <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
+      <th>Param</th>
     </tr>
   </thead>
   <tbody>
 <tr>
-    <td>callback</td><td><code><a href="#Undoo..beforeSaveCallback">beforeSaveCallback</a></code></td><td><p>callback function</p>
-</td>
+    <td>callback</td>
     </tr>  </tbody>
 </table>
 
-**Example**  
-```js
-// If callback returns `false` the save command will not be executed
-myHistory.onBeforeSave(()=>false)
+<a name="MementoManager+batchStart"></a>
 
-// You can overwrite item before save
-myHistory.onBeforeSave((item)=>{
-     return item.toUpperCase();
-})
-```
-<a name="Undoo..undoCallback"></a>
+### mementoManager.batchStart() ⇒ <code>void</code>
+start batch mode
 
-### Undoo~undoCallback : <code>function</code>
-undo callback
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
+<a name="MementoManager+batchEnd"></a>
 
-**Kind**: inner typedef of [<code>Undoo</code>](#Undoo)  
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>item</td><td><code>*</code></td><td><p>current history item</p>
-</td>
-    </tr>  </tbody>
-</table>
+### mementoManager.batchEnd() ⇒ <code>void</code>
+end batch mode
 
-<a name="Undoo..redoCallback"></a>
-
-### Undoo~redoCallback : <code>function</code>
-redo callback
-
-**Kind**: inner typedef of [<code>Undoo</code>](#Undoo)  
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>item</td><td><code>*</code></td><td><p>current history item</p>
-</td>
-    </tr>  </tbody>
-</table>
-
-<a name="Undoo..updateCallback"></a>
-
-### Undoo~updateCallback : <code>function</code>
-onUpdate callback
-
-**Kind**: inner typedef of [<code>Undoo</code>](#Undoo)  
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>item</td><td><code>*</code></td><td><p>current history item</p>
-</td>
-    </tr><tr>
-    <td>action</td><td><code>string</code></td><td><p>action that has called update event. Can be: redo, undo, save, clear</p>
-</td>
-    </tr><tr>
-    <td>history</td><td><code>Array</code></td><td><p>history array</p>
-</td>
-    </tr><tr>
-    <td>istance</td><td><code><a href="#Undoo">Undoo</a></code></td><td></td>
-    </tr>  </tbody>
-</table>
-
-<a name="Undoo..maxLengthCallback"></a>
-
-### Undoo~maxLengthCallback : <code>function</code>
-onMaxLength callback
-
-**Kind**: inner typedef of [<code>Undoo</code>](#Undoo)  
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>item</td><td><code>*</code></td><td><p>current history item</p>
-</td>
-    </tr><tr>
-    <td>history</td><td><code>Array</code></td><td><p>history array</p>
-</td>
-    </tr><tr>
-    <td>istance</td><td><code><a href="#Undoo">Undoo</a></code></td><td></td>
-    </tr>  </tbody>
-</table>
-
-<a name="Undoo..beforeSaveCallback"></a>
-
-### Undoo~beforeSaveCallback : <code>function</code>
-onBeforeSave callback
-
-**Kind**: inner typedef of [<code>Undoo</code>](#Undoo)  
-<table>
-  <thead>
-    <tr>
-      <th>Param</th><th>Type</th><th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-<tr>
-    <td>item</td><td><code>*</code></td><td><p>current history item</p>
-</td>
-    </tr><tr>
-    <td>istance</td><td><code><a href="#Undoo">Undoo</a></code></td><td></td>
-    </tr>  </tbody>
-</table>
-
+**Kind**: instance method of [<code>MementoManager</code>](#MementoManager)  
 
 ## Changelog
 You can view the changelog <a target="_blank" href="https://github.com/fabioricali/undoo/blob/master/CHANGELOG.md">here</a>
 
 ## License
-Undoo is open-sourced software licensed under the <a target="_blank" href="http://opensource.org/licenses/MIT">MIT license</a>
+UnReDo is open-sourced software licensed under the <a target="_blank" href="http://opensource.org/licenses/MIT">MIT license</a>
 
 ## Author
-<a target="_blank" href="http://rica.li">Fabio Ricali</a>
+<a target="_blank" href="">Jeff</a>
