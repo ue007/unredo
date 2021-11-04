@@ -1,12 +1,18 @@
 import typescript from '@rollup/plugin-typescript';
 import resolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
-import { terser } from 'rollup-plugin-terser';
+// import { terser } from 'rollup-plugin-terser';
 import commonjs from 'rollup-plugin-commonjs';
 
 export default {
-	input: './src/memento.ts',
+	input: './src/index.ts',
 	output: [
+		{
+			file: 'dist/unredo.es.js',
+			format: 'es',
+			sourcemap: true,
+			paths: (id) => {}
+		},
 		{
 			file: 'dist/unredo.js',
 			format: 'iife',

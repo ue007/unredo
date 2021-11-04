@@ -4,8 +4,9 @@ export interface IMementoDescriptor {
 	maxLength?: number;
 }
 export interface IEventDescriptor {
-	current: unknown;
 	action: string;
+	position: number;
+	current: unknown;
 	history: unknown;
 	scope: MementoManager;
 }
@@ -19,12 +20,10 @@ export interface IEventDescriptor {
 export class MementoManager {
 	_maxLength = 100;
 	_history: unknown[] = [];
-	_position = 0;
+	_position = -1;
 	_initialState: unknown = undefined;
 	_isExceeded = false;
 	_suspendSave = false;
-	_batchStart = 0;
-	_batchEnd = 0;
 	_onUpdate: (event?: IEventDescriptor) => unknown = () => 0;
 	_onBeforeSave: (event?: IEventDescriptor) => unknown = () => 0;
 	_onMaxLength: (event?: IEventDescriptor) => void = () => 0;
@@ -52,9 +51,7 @@ export class MementoManager {
 		this._initialState = undefined;
 		this._history = [];
 		this._isExceeded = false;
-		this._position = 0;
-		this._batchStart = 0;
-		this._batchEnd = 0;
+		this._position = -1;
 	}
 
 	/**
@@ -68,6 +65,7 @@ export class MementoManager {
 			if (!this._isExceeded) {
 				this._onMaxLength({
 					action: 'max',
+					position: this._position,
 					current: this.current(),
 					history: this.history(),
 					scope: this
@@ -176,7 +174,7 @@ export class MementoManager {
 	 * @returns {boolean}
 	 */
 	canUndo(): boolean {
-		return this._position > 1;
+		return this._position > 0;
 	}
 
 	/**
@@ -184,7 +182,7 @@ export class MementoManager {
 	 * @returns {boolean}
 	 */
 	canRedo(): boolean {
-		return this._position < this._history.length;
+		return this._position < this._history.length - 1;
 	}
 
 	/**
@@ -205,7 +203,7 @@ export class MementoManager {
 		if (!Array.isArray(history)) throw new TypeError('Items must be an array');
 		this._initiliaze();
 		this._history = history;
-		this._position = this._history.length;
+		this._position = this._history.length - 1;
 		this._initialState = history[0];
 		return this;
 	}
@@ -230,13 +228,16 @@ export class MementoManager {
 		}
 		const beforeSave = this._onBeforeSave({
 			action: 'beforesave',
+			position: this._position,
 			history: this._history,
-			current: item,
+			current: this.current(),
 			scope: this
 		});
 		item = beforeSave || item;
 		if (this._rejectSave(item, beforeSave)) return this;
-		if (this._position < this._history.length) this._history = this._history.slice(0, this._position);
+		if (this._position < this._history.length - 1) {
+			this._history = this._history.slice(0, this._position + 1);
+		}
 		if (typeof item !== 'undefined') {
 			if (item instanceof Map) {
 				this._history.push(cloneDeep(item));
@@ -249,10 +250,11 @@ export class MementoManager {
 			}
 		}
 		this._checkMaxLength();
-		this._position = this._history.length;
+		this._position = this._history.length - 1;
 		this._onUpdate({
-			current: this.current(),
 			action: 'save',
+			position: this._position,
+			current: this.current(),
 			history: this.history(),
 			scope: this
 		});
@@ -284,8 +286,9 @@ export class MementoManager {
 	clear(): MementoManager {
 		this._initiliaze();
 		this._onUpdate({
-			current: null,
 			action: 'clear',
+			position: this._position,
+			current: null,
 			history: this.history(),
 			scope: this
 		});
@@ -304,8 +307,9 @@ export class MementoManager {
 				callback(this.current());
 			}
 			this._onUpdate({
-				current: this.current(),
 				action: 'undo',
+				position: this._position,
+				current: this.current(),
 				history: this.history(),
 				scope: this
 			});
@@ -323,8 +327,9 @@ export class MementoManager {
 			this._position++;
 			if (typeof callback === 'function') callback(this.current());
 			this._onUpdate({
-				current: this.current(),
 				action: 'redo',
+				position: this._position,
+				current: this.current(),
 				history: this.history(),
 				scope: this
 			});
@@ -344,7 +349,7 @@ export class MementoManager {
 	 * @returns {*}
 	 */
 	current(): unknown {
-		return this._history.length ? this._history[this._position - 1] : null;
+		return this._history.length ? this._history[this._position] : null;
 	}
 
 	/**
@@ -353,6 +358,14 @@ export class MementoManager {
 	 */
 	count(): number {
 		return this._history.length ? this._history.length - 1 : 0;
+	}
+
+	/**
+	 * @param value {number}
+	 * @description {set max length}
+	 */
+	public set maxLength(value: number) {
+		this._maxLength = value;
 	}
 
 	/**
@@ -394,23 +407,5 @@ export class MementoManager {
 		MementoManager.callbackError(callback);
 		this._onBeforeSave = callback;
 		return this;
-	}
-
-	/**
-	 * start batch mode
-	 *  @returns {void}
-	 */
-	batchStart(): void {
-		this._batchStart = this._position;
-	}
-
-	/**
-	 * end batch mode
-	 * @returns {void}
-	 */
-	batchEnd(): void {
-		this._batchEnd = this._position - 1;
-		this._history && this._history.splice(this._batchStart, this._batchEnd - this._batchStart);
-		this._position = this._batchStart;
 	}
 }

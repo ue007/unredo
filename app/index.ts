@@ -34,7 +34,7 @@ datas.set(3, 3);
 memento.save(mapToString(datas));
 console.log(memento);
 
-memento.batchStart();
+memento.suspendSave();
 
 datas.set(4, 4);
 memento.save(mapToString(datas));
@@ -45,5 +45,5 @@ memento.save(mapToString(datas));
 datas.set(6, 6);
 memento.save(mapToString(datas));
 
-memento.batchEnd();
+memento.suspendSave(false);
 console.log(memento);

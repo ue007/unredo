@@ -2498,12 +2498,10 @@ var unredo = (function (exports) {
   class MementoManager {
       _maxLength = 100;
       _history = [];
-      _position = 0;
+      _position = -1;
       _initialState = undefined;
       _isExceeded = false;
       _suspendSave = false;
-      _batchStart = 0;
-      _batchEnd = 0;
       _onUpdate = () => 0;
       _onBeforeSave = () => 0;
       _onMaxLength = () => 0;
@@ -2529,9 +2527,7 @@ var unredo = (function (exports) {
           this._initialState = undefined;
           this._history = [];
           this._isExceeded = false;
-          this._position = 0;
-          this._batchStart = 0;
-          this._batchEnd = 0;
+          this._position = -1;
       }
       /**
        * @ignore
@@ -2544,6 +2540,7 @@ var unredo = (function (exports) {
               if (!this._isExceeded) {
                   this._onMaxLength({
                       action: 'max',
+                      position: this._position,
                       current: this.current(),
                       history: this.history(),
                       scope: this
@@ -2648,14 +2645,14 @@ var unredo = (function (exports) {
        * @returns {boolean}
        */
       canUndo() {
-          return this._position > 1;
+          return this._position > 0;
       }
       /**
        * @Check if redo is available
        * @returns {boolean}
        */
       canRedo() {
-          return this._position < this._history.length;
+          return this._position < this._history.length - 1;
       }
       /**
        * ignore
@@ -2676,7 +2673,7 @@ var unredo = (function (exports) {
               throw new TypeError('Items must be an array');
           this._initiliaze();
           this._history = history;
-          this._position = this._history.length;
+          this._position = this._history.length - 1;
           this._initialState = history[0];
           return this;
       }
@@ -2699,15 +2696,17 @@ var unredo = (function (exports) {
           }
           const beforeSave = this._onBeforeSave({
               action: 'beforesave',
+              position: this._position,
               history: this._history,
-              current: item,
+              current: this.current(),
               scope: this
           });
           item = beforeSave || item;
           if (this._rejectSave(item, beforeSave))
               return this;
-          if (this._position < this._history.length)
-              this._history = this._history.slice(0, this._position);
+          if (this._position < this._history.length - 1) {
+              this._history = this._history.slice(0, this._position + 1);
+          }
           if (typeof item !== 'undefined') {
               if (item instanceof Map) {
                   this._history.push(cloneDeep_1(item));
@@ -2720,10 +2719,11 @@ var unredo = (function (exports) {
               }
           }
           this._checkMaxLength();
-          this._position = this._history.length;
+          this._position = this._history.length - 1;
           this._onUpdate({
-              current: this.current(),
               action: 'save',
+              position: this._position,
+              current: this.current(),
               history: this.history(),
               scope: this
           });
@@ -2752,8 +2752,9 @@ var unredo = (function (exports) {
       clear() {
           this._initiliaze();
           this._onUpdate({
-              current: null,
               action: 'clear',
+              position: this._position,
+              current: null,
               history: this.history(),
               scope: this
           });
@@ -2771,8 +2772,9 @@ var unredo = (function (exports) {
                   callback(this.current());
               }
               this._onUpdate({
-                  current: this.current(),
                   action: 'undo',
+                  position: this._position,
+                  current: this.current(),
                   history: this.history(),
                   scope: this
               });
@@ -2790,8 +2792,9 @@ var unredo = (function (exports) {
               if (typeof callback === 'function')
                   callback(this.current());
               this._onUpdate({
-                  current: this.current(),
                   action: 'redo',
+                  position: this._position,
+                  current: this.current(),
                   history: this.history(),
                   scope: this
               });
@@ -2810,7 +2813,7 @@ var unredo = (function (exports) {
        * @returns {*}
        */
       current() {
-          return this._history.length ? this._history[this._position - 1] : null;
+          return this._history.length ? this._history[this._position] : null;
       }
       /**
        *
@@ -2818,6 +2821,13 @@ var unredo = (function (exports) {
        */
       count() {
           return this._history.length ? this._history.length - 1 : 0;
+      }
+      /**
+       * @param value {number}
+       * @description {set max length}
+       */
+      set maxLength(value) {
+          this._maxLength = value;
       }
       /**
        *
@@ -2855,22 +2865,6 @@ var unredo = (function (exports) {
           MementoManager.callbackError(callback);
           this._onBeforeSave = callback;
           return this;
-      }
-      /**
-       * start batch mode
-       *  @returns {void}
-       */
-      batchStart() {
-          this._batchStart = this._position;
-      }
-      /**
-       * end batch mode
-       * @returns {void}
-       */
-      batchEnd() {
-          this._batchEnd = this._position - 1;
-          this._history && this._history.splice(this._batchStart, this._batchEnd - this._batchStart);
-          this._position = this._batchStart;
       }
   }
 
