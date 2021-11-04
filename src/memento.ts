@@ -1,9 +1,9 @@
 import cloneDeep from 'lodash/cloneDeep';
-export interface IMementoDescriptor {
+export interface ICommandDescriptor {
 	provider?: (options?: unknown) => unknown;
 	maxLength?: number;
 }
-export interface IEventDescriptor {
+export interface ICommandEventDescriptor {
 	action: string;
 	position: number;
 	current: unknown;
@@ -18,24 +18,24 @@ export interface IEventDescriptor {
  * It's easy to implement, but memory-inefficient since you need to store similar copies of the whole state.
  */
 export class MementoManager {
-	_maxLength = 100;
-	_history: unknown[] = [];
-	_position = -1;
-	_initialState: unknown = undefined;
-	_isExceeded = false;
-	_suspendSave = false;
-	_onUpdate: (event?: IEventDescriptor) => unknown = () => 0;
-	_onBeforeSave: (event?: IEventDescriptor) => unknown = () => 0;
-	_onMaxLength: (event?: IEventDescriptor) => void = () => 0;
-	_provider: (event?: unknown) => unknown = () => 0;
+	private _maxLength = 100;
+	private _history: unknown[] = [];
+	private _position = -1;
+	private _initialState: unknown = undefined;
+	private _isExceeded = false;
+	private _suspendSave = false;
+	private _onUpdate: (event?: ICommandEventDescriptor) => unknown = () => 0;
+	private _onBeforeSave: (event?: ICommandEventDescriptor) => unknown = () => 0;
+	private _onMaxLength: (event?: ICommandEventDescriptor) => void = () => 0;
+	private _provider: (event?: unknown) => unknown = () => 0;
 
 	/**
 	 *
-	 * @param options {IMementoDescriptor}
+	 * @param options {ICommandDescriptor}
 	 * @param options.provider {Function}
 	 * @param options.maxLength {Function}
 	 */
-	constructor(options?: IMementoDescriptor) {
+	constructor(options?: ICommandDescriptor) {
 		if (options && options.provider) {
 			this._provider = options.provider;
 		}
@@ -381,7 +381,7 @@ export class MementoManager {
 	 * @param callback
 	 * @returns {MementoManager}
 	 */
-	onUpdate(callback: (event?: IEventDescriptor) => unknown): MementoManager {
+	onUpdate(callback: (event?: ICommandEventDescriptor) => unknown): MementoManager {
 		MementoManager.callbackError(callback);
 		this._onUpdate = callback;
 		return this;
@@ -392,7 +392,7 @@ export class MementoManager {
 	 * @param callback
 	 * @returns {MementoManager}
 	 */
-	onMaxLength(callback: (event?: IEventDescriptor) => void): MementoManager {
+	onMaxLength(callback: (event?: ICommandEventDescriptor) => void): MementoManager {
 		MementoManager.callbackError(callback);
 		this._onMaxLength = callback;
 		return this;
@@ -403,7 +403,7 @@ export class MementoManager {
 	 * @param callback
 	 * @returns {MementoManager}
 	 */
-	onBeforeSave(callback: (event?: IEventDescriptor) => void): MementoManager {
+	onBeforeSave(callback: (event?: ICommandEventDescriptor) => void): MementoManager {
 		MementoManager.callbackError(callback);
 		this._onBeforeSave = callback;
 		return this;

@@ -1,6 +1,293 @@
-<html>
-	<head></head>
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, user-scalable=0, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"
+		/>
+		<title>UnDo/Redo Demo</title>
+		<style>
+			@import url('http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css');
+
+			body {
+				font-family: sans-serif;
+			}
+			p {
+				margin: 0 0 1em 0;
+			}
+			#view {
+				margin: 0.5em 0 0.25em 0;
+				border: 1px solid #ccc;
+				background: #fff;
+			}
+			.container {
+				width: 600px;
+			}
+			input[type='number'] {
+				text-align: center;
+				width: 40px;
+			}
+			textarea {
+				width: 300px;
+				height: 150px;
+			}
+			fieldset {
+				border: 1px solid #ccc;
+			}
+		</style>
+	</head>
 	<body>
-		<p><a href="memento.html">Command</a></p>
+		<h1>UnDo/Redo (Command Pattern)</h1>
+
+		<div class="container">
+			<div class="row">
+				<p><label for="name">Command Manager</label></p>
+				<div class="form-inline">
+					<button type="button" class="btn btn-primary" id="btnUndo" disabled="disabled">Undo</button>
+					<button type="button" class="btn btn-primary" id="btnRedo" disabled="disabled">Redo</button>
+					<button type="button" class="btn btn-primary" id="btnSuspended">Suspend</button>
+					<button type="button" class="btn btn-primary" id="btnBatch">Batch Start</button>
+					<label for="name">Max Length:</label>
+					<input
+						type="text"
+						id="limit"
+						name="limit"
+						required
+						minlength="4"
+						maxlength="8"
+						size="10"
+						onchange="handleLimit()"
+						oninput="handleLimit()"
+					/>
+					<button type="button" class="btn btn-default pull-right" id="btnClear">Clear memory</button>
+				</div>
+				<div>
+					<canvas id="view" width="600" height="400"></canvas>
+				</div>
+				<p class="comment mute">Click on the area to create circles</p>
+				<p>Message</p>
+				<fieldset>
+					<textarea id="message" placeholder="write a text">0</textarea>
+				</fieldset>
+				<p>Log</p>
+				<fieldset>
+					<textarea id="log"></textarea>
+				</fieldset>
+			</div>
+		</div>
+
+		<script src="./libs/unredo.js"></script>
+		<script>
+			const Drawer = function (canvasId, undoManager) {
+				'use strict';
+
+				var CANVAS_WIDTH = document.getElementById(canvasId).width,
+					CANVAS_HEIGHT = document.getElementById(canvasId).height,
+					MIN_CIRCLE_RADIUS = 20,
+					MAX_CIRCLE_RADIUS = 40,
+					ctx,
+					circles = [],
+					circleId = 0,
+					drawingCanvas = window.document.getElementById(canvasId);
+
+				if (drawingCanvas.getContext === undefined) {
+					return;
+				}
+
+				ctx = drawingCanvas.getContext('2d');
+
+				function clear() {
+					ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+				}
+
+				function drawCircle(x, y, radius, color) {
+					ctx.fillStyle = color;
+					ctx.beginPath();
+					ctx.arc(x, y, radius, 0, Math.PI * 2, true);
+					ctx.closePath();
+					ctx.fill();
+				}
+
+				function drawText(text, x, y) {
+					ctx.font = '24px serif';
+					ctx.fillStyle = 'black';
+					ctx.fillText(text, x, y);
+				}
+
+				function draw() {
+					clear();
+					var i, circle;
+					for (i = 0; i < circles.length; i = i + 1) {
+						circle = circles[i];
+						drawCircle(circle.x, circle.y, circle.radius, circle.color);
+						drawText(circle.id, circle.x, circle.y);
+					}
+				}
+
+				function removeCircle(id) {
+					var i = 0,
+						index = -1;
+					for (i = 0; i < circles.length; i += 1) {
+						if (circles[i].id === id) {
+							index = i;
+						}
+					}
+					if (index !== -1) {
+						circles.splice(index, 1);
+					}
+					draw();
+				}
+
+				function createCircle(attrs) {
+					circles.push(attrs);
+					draw();
+				}
+
+				drawingCanvas.addEventListener(
+					'click',
+					function (e) {
+						var mouseX = 0,
+							mouseY = 0,
+							intColor,
+							hexColor,
+							color,
+							radius;
+
+						if (!e) {
+							e = window.event;
+						}
+						if (e.pageX || e.pageY) {
+							mouseX = e.pageX;
+							mouseY = e.pageY;
+						} else if (e.clientX || e.clientY) {
+							mouseX = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+							mouseY = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+						}
+						mouseX -= drawingCanvas.offsetLeft;
+						mouseY -= drawingCanvas.offsetTop;
+
+						intColor = Math.floor(Math.random() * (256 * 256 * 256));
+						hexColor = parseInt(intColor, 10).toString(16);
+						color = '#' + (hexColor.length < 2 ? '0' + hexColor : hexColor);
+						radius = MIN_CIRCLE_RADIUS + Math.random() * (MAX_CIRCLE_RADIUS - MIN_CIRCLE_RADIUS);
+
+						const attrs = {
+							id: circles.length,
+							x: mouseX,
+							y: mouseY,
+							radius: radius,
+							color: color
+						};
+						createCircle(attrs);
+						undoManager.add({
+							uuid: attrs.id,
+							undo: function () {
+								removeCircle(attrs.id);
+							},
+							redo: function () {
+								createCircle(attrs);
+							}
+						});
+					},
+					false
+				);
+			};
+			let log = document.getElementById('log');
+			let message = document.getElementById('message');
+
+			function appendLog(msg) {
+				log.value += msg + '\n-----------------------\n';
+				log.scrollTop = log.scrollHeight;
+			}
+
+			function handleLimit() {
+				var input = document.getElementById('limit');
+				commandManager.limit = parseInt(input.value);
+				console.log(parseInt(input.value));
+			}
+
+			const commandManager = (window.commandManager = new unredo.CommandManager()
+				.onBeforeAdd((event) => {
+					const current = event.current,
+						cursor = event.cursor,
+						action = event.action,
+						commands = event.commands,
+						scope = event.scope;
+					console.log('onBeforeAdd:', event);
+					appendLog(action + ':' + JSON.stringify(current));
+				})
+				.onUpdate((event) => {
+					const current = event.current,
+						cursor = event.cursor,
+						action = event.action,
+						commands = event.commands,
+						scope = event.scope;
+					console.log('onupdate:', event);
+					appendLog(action + ':' + JSON.stringify(current));
+					btnUndo.disabled = !commandManager.canUndo();
+					btnRedo.disabled = !commandManager.canRedo();
+				})
+				.onSuspended((event) => {
+					const current = event.current,
+						cursor = event.cursor,
+						action = event.action,
+						commands = event.commands,
+						scope = event.scope;
+					console.log('onSuspended:', event);
+					appendLog(action + ':' + JSON.stringify(current));
+				})
+				.onLimited((event) => {
+					const current = event.current,
+						cursor = event.cursor,
+						action = event.action,
+						commands = event.commands,
+						scope = event.scope;
+					console.log('onLimited:', event);
+					appendLog(action + ':' + JSON.stringify(current));
+				}));
+
+			const drawer = new Drawer('view', commandManager);
+			const btnLimit = document.getElementById('limit');
+			const btnUndo = document.getElementById('btnUndo');
+			const btnRedo = document.getElementById('btnRedo');
+			const btnClear = document.getElementById('btnClear');
+			const btnSuspended = document.getElementById('btnSuspended');
+			const btnBatch = document.getElementById('btnBatch');
+
+			btnUndo.onclick = (e) => {
+				commandManager.undo((item) => {
+					message.value = item && item.uuid;
+				});
+			};
+			btnRedo.onclick = (e) => {
+				commandManager.redo((item) => {
+					message.value = item && item.uuid;
+				});
+			};
+			btnClear.onclick = (e) => {
+				commandManager.clear();
+			};
+
+			btnSuspended.onclick = (e) => {
+				if (commandManager.allowedAdd()) {
+					commandManager.suspendAdd(); // 挂起
+					btnSuspended.innerText = 'UnSuspend';
+				} else {
+					commandManager.suspendAdd(false); // 解挂
+					btnSuspended.innerText = 'Suspend';
+				}
+			};
+
+			btnBatch.onclick = (e) => {
+				if (commandManager.isBatching()) {
+					commandManager.endBatch(); // 结束batch
+					btnBatch.innerText = 'Batch Start';
+				} else {
+					commandManager.startBatch(); // 开始Batch
+					btnBatch.innerText = 'Batch End';
+				}
+			};
+		</script>
 	</body>
 </html>

@@ -1,25 +1,25 @@
 import typescript from '@rollup/plugin-typescript';
 import resolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
-// import { terser } from 'rollup-plugin-terser';
+import { terser } from 'rollup-plugin-terser';
 import commonjs from 'rollup-plugin-commonjs';
 
 export default {
 	input: './src/index.ts',
 	output: [
-		{
-			file: 'dist/unredo.es.js',
-			format: 'es',
-			sourcemap: true,
-			paths: (id) => {}
-		},
-		{
-			file: 'dist/unredo.js',
-			format: 'iife',
-			name: 'unredo',
-			sourcemap: true,
-			paths: (id) => {}
-		},
+		// {
+		// 	file: 'dist/unredo.es.js',
+		// 	format: 'es',
+		// 	sourcemap: true,
+		// 	paths: (id) => {}
+		// },
+		// {
+		// 	file: 'dist/unredo.js',
+		// 	format: 'iife',
+		// 	name: 'unredo',
+		// 	sourcemap: true,
+		// 	paths: (id) => {}
+		// },
 		{
 			file: 'docs/libs/unredo.js',
 			format: 'iife',
@@ -38,8 +38,8 @@ export default {
 		babel({
 			exclude: 'node_modules/**'
 		}),
-		typescript()
-		// terser()
+		typescript(),
+		terser()
 	]
 	// 指出应将哪些模块视为外部模块
 	// external: ['lodash']
