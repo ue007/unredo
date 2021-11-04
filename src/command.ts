@@ -14,13 +14,18 @@ export interface IMementoEventDescriptor {
 }
 
 /**
- * Undo Redo Manager:Command Pattern,
+ *
+ */
+/**
+ * @class
+ * @description
+ * The Command Pattern, where you capture commands/actions that affect the state (the current action and it's inverse action). Harder to implement since for for each undoable action
+ * in your application you must explicitly code it's inverse action, but it's far more memory-efficient since you only store the actions that affect the state.
  */
 export class CommandManager {
 	private _commands: unknown[] = [];
 	private _cursor = -1;
 	private _suspended = false;
-	private _enable = false;
 	private _limit = 100;
 	private _batch: CommandDescriptor[] | undefined = undefined;
 
@@ -30,10 +35,18 @@ export class CommandManager {
 	private _onSuspended: (event?: IMementoEventDescriptor) => void = () => 0;
 	private _provider: (event?: unknown) => unknown = () => 0;
 
+	/**
+	 *
+	 */
 	constructor() {
 		console.log('init Command Manager');
 	}
 
+	/**
+	 *
+	 * @param command {CommandDescriptor | CommandDescriptor[]}
+	 * @returns {void}
+	 */
 	public add(command: CommandDescriptor | CommandDescriptor[]): void {
 		const batch = this._batch;
 		const commands = this._commands;
@@ -86,6 +99,11 @@ export class CommandManager {
 		}
 	}
 
+	/**
+	 *
+	 * @param callback {function}
+	 * @returns {CommandManager}
+	 */
 	public undo(callback?: (current: unknown) => void): CommandManager {
 		const commands = this._commands;
 		if (!this.canUndo()) {
@@ -117,6 +135,11 @@ export class CommandManager {
 		return this;
 	}
 
+	/**
+	 *
+	 * @param callback {function}
+	 * @returns {CommandManager}
+	 */
 	public redo(callback?: (current: unknown) => void): CommandManager {
 		const commands = this._commands;
 		if (!this.canRedo()) {
@@ -146,7 +169,7 @@ export class CommandManager {
 
 	/**
 	 * ignore
-	 * @param callback
+	 * @param callback {function}
 	 * @private
 	 */
 	static callbackError(callback: () => void) {
@@ -155,8 +178,8 @@ export class CommandManager {
 
 	/**
 	 *
-	 * @param callback
-	 * @returns {MementoManager}
+	 * @param callback {function}
+	 * @returns {CommandManager}
 	 */
 	onUpdate(callback: (event?: IMementoEventDescriptor) => unknown): CommandManager {
 		CommandManager.callbackError(callback);
@@ -166,8 +189,8 @@ export class CommandManager {
 
 	/**
 	 *
-	 * @param callback
-	 * @returns {MementoManager}
+	 * @param callback {function}
+	 * @returns {CommandManager}
 	 */
 	onLimited(callback: (event?: IMementoEventDescriptor) => void): CommandManager {
 		CommandManager.callbackError(callback);
@@ -177,8 +200,8 @@ export class CommandManager {
 
 	/**
 	 *
-	 * @param callback
-	 * @returns {MementoManager}
+	 * @param callback {function}
+	 * @returns {CommandManager}
 	 */
 	onSuspended(callback: (event?: IMementoEventDescriptor) => void): CommandManager {
 		CommandManager.callbackError(callback);
@@ -188,8 +211,8 @@ export class CommandManager {
 
 	/**
 	 *
-	 * @param callback
-	 * @returns {MementoManager}
+	 * @param callback {function}
+	 * @returns {CommandManager}
 	 */
 	onBeforeAdd(callback: (event?: IMementoEventDescriptor) => void): CommandManager {
 		CommandManager.callbackError(callback);
@@ -197,50 +220,75 @@ export class CommandManager {
 		return this;
 	}
 
+	/**
+	 *
+	 * @returns {boolean}
+	 */
 	public canUndo(): boolean {
 		return this._cursor >= 0;
 	}
 
-	public canRedo() {
+	/**
+	 *
+	 * @returns {boolean}
+	 */
+	public canRedo(): boolean {
 		return this._cursor < this._commands.length - 1;
 	}
 
-	public size() {
+	/**
+	 *
+	 * @returns {number}
+	 */
+	public size(): number {
 		return this._commands.length;
 	}
 
+	/**
+	 * @returns {number}
+	 */
 	public get cursor(): number {
 		return this._cursor;
 	}
 
+	/**
+	 *
+	 * @returns {CommandManager}
+	 */
 	public clear(): CommandManager {
 		this._commands = [];
 		this._cursor = -1;
 		return this;
 	}
 
+	/**
+	 *
+	 * @returns {*}
+	 */
 	public current(): unknown {
 		return this._commands[this._cursor];
 	}
 
+	/**
+	 *
+	 * @returns {*}
+	 */
 	public get commands(): unknown[] {
 		return this._commands;
 	}
 
+	/**
+	 * @param limit {number}
+	 */
 	public set limit(limit: number) {
 		this._limit = limit;
 	}
 
-	public get limit() {
+	/**
+	 * @returns {number}
+	 */
+	public get limit(): number {
 		return this._limit;
-	}
-
-	public set enable(enable: boolean) {
-		this._enable = enable;
-	}
-
-	public get enable(): boolean {
-		return this._enable;
 	}
 
 	public get suspended(): boolean {
@@ -251,15 +299,28 @@ export class CommandManager {
 		this._suspended = suspended;
 	}
 
+	/**
+	 *
+	 * @param state {boolean}
+	 * @returns {CommandManager}
+	 */
 	public suspendAdd(state = true): CommandManager {
 		this._suspended = state;
 		return this;
 	}
 
+	/**
+	 *
+	 * @returns {boolean}
+	 */
 	public allowedAdd(): boolean {
 		return !this._suspended;
 	}
 
+	/**
+	 *
+	 * @returns {CommandManager}
+	 */
 	public startBatch(): CommandManager {
 		if (!this._batch) {
 			this._batch = [];
@@ -267,7 +328,11 @@ export class CommandManager {
 		return this;
 	}
 
-	public endBatch() {
+	/**
+	 *
+	 * @returns  {CommandManager}
+	 */
+	public endBatch(): CommandManager {
 		if (this._batch) {
 			const batch: CommandDescriptor[] = cloneDeep(this._batch);
 			this._batch = undefined;
@@ -278,6 +343,12 @@ export class CommandManager {
 		return this;
 	}
 
+	/**
+	 *
+	 * @param callback {function}
+	 * @param scope {*}
+	 * @returns {CommandManager}
+	 */
 	public batch(callback: () => unknown, scope: unknown): CommandManager {
 		this.startBatch();
 		callback && callback.call(scope);
@@ -285,6 +356,10 @@ export class CommandManager {
 		return this;
 	}
 
+	/**
+	 *
+	 * @returns {boolean}
+	 */
 	public isBatching(): boolean {
 		return !!this._batch;
 	}
