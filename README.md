@@ -104,8 +104,7 @@ console.log(memento);
 <a name="new_MementoManager_new"></a>
 
 ### new MementoManager(options)
-Implementing undo/redo Function with Memento Pattern , where you capture the whole current state.
-It's easy to implement, but memory-inefficient since you need to store similar copies of the whole state.
+Implementing undo/redo Function with Memento Pattern , where you capture the whole current state.It's easy to implement, but memory-inefficient since you need to store similar copies of the whole state.
 
 <table>
   <thead>
@@ -347,8 +346,7 @@ get history
 <a name="new_CommandManager_new"></a>
 
 ### new CommandManager()
-The Command Pattern, where you capture commands/actions that affect the state (the current action and it's inverse action). Harder to implement since for for each undoable action
-in your application you must explicitly code it's inverse action, but it's far more memory-efficient since you only store the actions that affect the state.
+The Command Pattern, where you capture commands/actions that affect the state (the current action and it's inverse action). Harder to implement since for for each undoable actionin your application you must explicitly code it's inverse action, but it's far more memory-efficient since you only store the actions that affect the state.
 
 <a name="CommandManager+cursor"></a>
 
@@ -562,7 +560,7 @@ in your application you must explicitly code it's inverse action, but it's far m
 **Kind**: instance method of [<code>CommandManager</code>](#CommandManager)  
 
 ## Changelog
-You can view the changelog <a target="_blank" href="https://github.com/fabioricali/undoo/blob/master/CHANGELOG.md">here</a>
+You can view the changelog <a target="_blank" href="https://github.com/ue007/unredo/blob/main/CHANGELOG.md">here</a>
 
 ## License
 UnReDo is open-sourced software licensed under the <a target="_blank" href="http://opensource.org/licenses/MIT">MIT license</a>
