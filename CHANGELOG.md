@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 [1.0.2] - 2021-11-04
 - **Added** `CommandManager` class
-- 
+  
 [1.0.1] - 2021-11-03
 - **Added** `MementoManager` class
 
